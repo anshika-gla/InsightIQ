@@ -1,0 +1,75 @@
+{
+  "query": "What are the top 3 customers in each region by revenue?",
+  "status": "success",
+  "plan": {
+    "operation": "top_n",
+    "metric": "revenue",
+    "aggregation": null,
+    "group_by": [
+      "region",
+      "customer_id"
+    ],
+    "filters": [],
+    "limit": 3,
+    "order": "desc",
+    "nested": true
+  },
+  "result": [
+    {
+      "region": "APAC",
+      "customer_id": "C001",
+      "revenue": 324.0,
+      "_rank": 1.0
+    },
+    {
+      "region": "APAC",
+      "customer_id": "C003",
+      "revenue": 75.0,
+      "_rank": 2.0
+    },
+    {
+      "region": "APAC",
+      "customer_id": "C006",
+      "revenue": 75.0,
+      "_rank": 3.0
+    },
+    {
+      "region": "EMEA",
+      "customer_id": "C008",
+      "revenue": 1288.0,
+      "_rank": 1.0
+    },
+    {
+      "region": "EMEA",
+      "customer_id": "C002",
+      "revenue": 855.0,
+      "_rank": 2.0
+    },
+    {
+      "region": "EMEA",
+      "customer_id": "C005",
+      "revenue": 255.0,
+      "_rank": 3.0
+    },
+    {
+      "region": "NA",
+      "customer_id": "C009",
+      "revenue": 2068.0,
+      "_rank": 1.0
+    },
+    {
+      "region": "NA",
+      "customer_id": "C004",
+      "revenue": 1116.0,
+      "_rank": 2.0
+    },
+    {
+      "region": "NA",
+      "customer_id": "C007",
+      "revenue": 78.4,
+      "_rank": 3.0
+    }
+  ],
+  "confidence": 0.9,
+  "explanation": "Ranked customers by revenue within each region and returned the top 3 customers for each region."
+}

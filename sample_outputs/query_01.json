@@ -1,0 +1,16 @@
+{
+  "query": "What are the total sales?",
+  "status": "success",
+  "plan": {
+    "operation": "sum",
+    "metric": "revenue",
+    "aggregation": "sum",
+    "group_by": [],
+    "filters": [],
+    "limit": null,
+    "order": "desc"
+  },
+  "result": 6134.4,
+  "confidence": 0.9,
+  "explanation": "The sum of revenue was calculated."
+}

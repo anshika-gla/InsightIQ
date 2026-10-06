@@ -1,0 +1,46 @@
+{
+  "query": "Which region missed its target in February 2024?",
+  "status": "success",
+  "plan": {
+    "operation": "comparison",
+    "metric": "revenue",
+    "aggregation": null,
+    "group_by": [],
+    "filters": [],
+    "limit": null,
+    "order": "desc",
+    "time_period": "2024-02",
+    "nested": false
+  },
+  "result": [
+    {
+      "region": "APAC",
+      "month": "2024-02",
+      "target_revenue": 6000,
+      "actual_revenue": 75.0,
+      "difference": -5925.0,
+      "achievement_percentage": 1.25,
+      "target_met": false
+    },
+    {
+      "region": "EMEA",
+      "month": "2024-02",
+      "target_revenue": 7500,
+      "actual_revenue": 255.0,
+      "difference": -7245.0,
+      "achievement_percentage": 3.4,
+      "target_met": false
+    },
+    {
+      "region": "NA",
+      "month": "2024-02",
+      "target_revenue": 9500,
+      "actual_revenue": 1116.0,
+      "difference": -8384.0,
+      "achievement_percentage": 11.7474,
+      "target_met": false
+    }
+  ],
+  "confidence": 0.9,
+  "explanation": "Compared actual February 2024 revenue against the target revenue for each region. All three regions missed their targets."
+}

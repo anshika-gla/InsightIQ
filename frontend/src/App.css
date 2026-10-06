@@ -1,0 +1,980 @@
+/* =========================================================
+   InsightIQ - Professional Analytics Dashboard
+   ========================================================= */
+
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: #172033;
+  background: #f5f7fb;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(79, 70, 229, 0.08),
+      transparent 30%
+    ),
+    #f5f7fb;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* =========================================================
+   APP
+   ========================================================= */
+
+.app {
+  min-height: 100vh;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.header {
+  width: 100%;
+  min-height: 82px;
+
+  padding: 18px 7%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: rgba(255, 255, 255, 0.92);
+
+  border-bottom: 1px solid #e8ebf2;
+
+  backdrop-filter: blur(16px);
+
+  position: sticky;
+  top: 0;
+
+  z-index: 20;
+}
+
+.header h1 {
+  margin: 0;
+
+  font-size: 28px;
+  font-weight: 800;
+
+  letter-spacing: -0.7px;
+
+  background: linear-gradient(
+    135deg,
+    #312e81,
+    #4f46e5,
+    #7c3aed
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  color: transparent;
+}
+
+.header p {
+  margin: 4px 0 0;
+
+  color: #6b7280;
+
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   STATUS BADGE
+   ========================================================= */
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 14px;
+
+  border: 1px solid #dfe3ee;
+  border-radius: 999px;
+
+  background: #ffffff;
+
+  color: #374151;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.status-badge::first-letter {
+  color: #16a34a;
+}
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.container {
+  width: min(1100px, 92%);
+
+  margin: 0 auto;
+
+  padding: 58px 0 80px;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.hero {
+  max-width: 760px;
+
+  margin: 0 auto 42px;
+
+  text-align: center;
+}
+
+.hero h2 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: clamp(34px, 5vw, 54px);
+
+  line-height: 1.05;
+
+  letter-spacing: -2px;
+
+  font-weight: 800;
+}
+
+.hero p {
+  max-width: 620px;
+
+  margin: 18px auto 0;
+
+  color: #687386;
+
+  font-size: 16px;
+
+  line-height: 1.7;
+}
+
+/* =========================================================
+   QUERY CARD
+   ========================================================= */
+
+.query-card {
+  padding: 28px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  border: 1px solid #e4e7ef;
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 20px 50px rgba(31, 41, 55, 0.08),
+    0 4px 12px rgba(31, 41, 55, 0.04);
+}
+
+.query-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.query-card label {
+  margin-bottom: 10px;
+
+  color: #20283a;
+
+  font-size: 14px;
+
+  font-weight: 700;
+}
+
+.query-card textarea {
+  width: 100%;
+
+  min-height: 120px;
+
+  resize: vertical;
+
+  padding: 17px 18px;
+
+  border: 1px solid #d9deea;
+
+  border-radius: 14px;
+
+  outline: none;
+
+  background: #fafbfe;
+
+  color: #172033;
+
+  font-size: 15px;
+
+  line-height: 1.6;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.query-card textarea::placeholder {
+  color: #9aa3b2;
+}
+
+.query-card textarea:focus {
+  background: #ffffff;
+
+  border-color: #6366f1;
+
+  box-shadow:
+    0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* =========================================================
+   ANALYZE BUTTON
+   ========================================================= */
+
+.query-card form > button {
+  width: 100%;
+
+  min-height: 50px;
+
+  margin-top: 15px;
+
+  border: 0;
+
+  border-radius: 13px;
+
+  color: #ffffff;
+
+  background: linear-gradient(
+    135deg,
+    #4338ca,
+    #6366f1,
+    #7c3aed
+  );
+
+  font-size: 14px;
+
+  font-weight: 750;
+
+  box-shadow:
+    0 10px 22px rgba(79, 70, 229, 0.22);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.query-card form > button:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 14px 28px rgba(79, 70, 229, 0.28);
+}
+
+.query-card form > button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.query-card form > button:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.65;
+}
+
+/* =========================================================
+   EXAMPLE BUTTONS
+   ========================================================= */
+
+.examples {
+  margin-top: 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 9px;
+}
+
+.examples > span {
+  margin-right: 3px;
+
+  color: #7a8495;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.examples button {
+  padding: 8px 12px;
+
+  border: 1px solid #e0e4ed;
+
+  border-radius: 999px;
+
+  background: #f8f9fc;
+
+  color: #4b5563;
+
+  font-size: 12px;
+
+  font-weight: 650;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.examples button:hover {
+  color: #4338ca;
+
+  background: #eef0ff;
+
+  border-color: #c7c9ff;
+
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   ERROR CARD
+   ========================================================= */
+
+.error-card {
+  margin-top: 24px;
+
+  padding: 20px 22px;
+
+  border: 1px solid #fecaca;
+
+  border-radius: 16px;
+
+  background: #fff7f7;
+}
+
+.error-card strong {
+  color: #b91c1c;
+
+  font-size: 14px;
+}
+
+.error-card p {
+  margin: 7px 0 0;
+
+  color: #7f1d1d;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+/* =========================================================
+   RESULTS
+   ========================================================= */
+
+.results-section {
+  margin-top: 32px;
+
+  animation: fadeUp 0.35s ease;
+}
+
+.result-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 25px;
+
+  margin-bottom: 18px;
+}
+
+.section-label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #6366f1;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.4px;
+}
+
+.result-header h2 {
+  max-width: 760px;
+
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 21px;
+
+  line-height: 1.4;
+
+  font-weight: 750;
+}
+
+/* =========================================================
+   CONFIDENCE
+   ========================================================= */
+
+.confidence {
+  flex-shrink: 0;
+
+  min-width: 125px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #dfe3ee;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  text-align: right;
+
+  box-shadow:
+    0 5px 18px rgba(15, 23, 42, 0.05);
+}
+
+.confidence span {
+  display: block;
+
+  color: #8a93a3;
+
+  font-size: 11px;
+
+  font-weight: 650;
+}
+
+.confidence strong {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #16a34a;
+
+  font-size: 21px;
+}
+
+/* =========================================================
+   ANSWER CARD
+   ========================================================= */
+
+.answer-card {
+  padding: 25px;
+
+  border: 1px solid #e2e5ee;
+
+  border-radius: 19px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.answer-card h3,
+.explanation-card h3 {
+  margin: 0 0 18px;
+
+  color: #252d3d;
+
+  font-size: 15px;
+
+  font-weight: 750;
+}
+
+/* =========================================================
+   SINGLE VALUE RESULT
+   ========================================================= */
+
+.single-result {
+  padding: 25px;
+
+  border-radius: 15px;
+
+  background: linear-gradient(
+    135deg,
+    #f1f3ff,
+    #faf9ff
+  );
+
+  color: #3730a3;
+
+  font-size: 38px;
+
+  font-weight: 800;
+
+  letter-spacing: -1px;
+
+  text-align: center;
+}
+
+/* =========================================================
+   RESULT TABLE
+   ========================================================= */
+
+.result-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+
+  border: 1px solid #e7eaf1;
+
+  border-radius: 14px;
+}
+
+.result-table {
+  width: 100%;
+
+  min-width: 520px;
+
+  border-collapse: collapse;
+}
+
+.result-table th {
+  padding: 13px 16px;
+
+  background: #f7f8fc;
+
+  border-bottom: 1px solid #e4e7ef;
+
+  color: #687386;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  text-align: left;
+}
+
+.result-table td {
+  padding: 14px 16px;
+
+  border-bottom: 1px solid #edf0f5;
+
+  color: #374151;
+
+  font-size: 13px;
+}
+
+.result-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.result-table tbody tr:hover {
+  background: #fafbff;
+}
+
+/* =========================================================
+   OBJECT RESULT
+   ========================================================= */
+
+.object-result {
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(180px, 1fr));
+
+  gap: 12px;
+}
+
+.result-item {
+  padding: 17px;
+
+  border: 1px solid #e7eaf1;
+
+  border-radius: 13px;
+
+  background: #fafbfe;
+}
+
+.result-item span {
+  display: block;
+
+  color: #7c8595;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.4px;
+}
+
+.result-item strong {
+  display: block;
+
+  margin-top: 7px;
+
+  color: #252d3d;
+
+  font-size: 20px;
+}
+
+/* =========================================================
+   CHART CARD
+   ========================================================= */
+
+.chart-card {
+  margin-top: 18px;
+
+  padding: 25px;
+
+  border: 1px solid #e2e5ee;
+
+  border-radius: 19px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.chart-heading h3 {
+  margin: 0;
+
+  color: #252d3d;
+
+  font-size: 15px;
+
+  font-weight: 750;
+}
+
+.chart-heading p {
+  margin: 6px 0 0;
+
+  color: #8a93a3;
+
+  font-size: 12px;
+}
+
+.chart-container {
+  width: 100%;
+
+  margin-top: 18px;
+
+  min-height: 340px;
+}
+
+/* =========================================================
+   DETAIL CARDS
+   ========================================================= */
+
+.details-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 14px;
+
+  margin-top: 16px;
+}
+
+.detail-card {
+  padding: 18px;
+
+  border: 1px solid #e4e7ef;
+
+  border-radius: 15px;
+
+  background: #ffffff;
+}
+
+.detail-card span {
+  display: block;
+
+  color: #8a93a3;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+}
+
+.detail-card strong {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #273044;
+
+  font-size: 15px;
+}
+
+/* =========================================================
+   EXPLANATION
+   ========================================================= */
+
+.explanation-card {
+  margin-top: 16px;
+
+  padding: 22px;
+
+  border: 1px solid #e4e7ef;
+
+  border-radius: 16px;
+
+  background: #ffffff;
+}
+
+.explanation-card p {
+  margin: 0;
+
+  color: #667085;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+/* =========================================================
+   QUERY LOGIC
+   ========================================================= */
+
+.logic-card {
+  margin-top: 16px;
+
+  border: 1px solid #e4e7ef;
+
+  border-radius: 15px;
+
+  background: #ffffff;
+
+  overflow: hidden;
+}
+
+.logic-card summary {
+  padding: 17px 20px;
+
+  cursor: pointer;
+
+  color: #475467;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  list-style-position: inside;
+}
+
+.logic-card summary:hover {
+  color: #4338ca;
+
+  background: #fafbff;
+}
+
+.logic-card pre {
+  margin: 0;
+
+  padding: 20px;
+
+  overflow-x: auto;
+
+  background: #111827;
+
+  color: #d1d5db;
+
+  font-family:
+    "JetBrains Mono",
+    "Cascadia Code",
+    Consolas,
+    monospace;
+
+  font-size: 12px;
+
+  line-height: 1.7;
+}
+
+/* =========================================================
+   ANIMATION
+   ========================================================= */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .header {
+    padding: 16px 5%;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .status-badge {
+    display: none;
+  }
+
+  .container {
+    width: 92%;
+
+    padding-top: 40px;
+  }
+
+  .hero {
+    margin-bottom: 30px;
+  }
+
+  .hero h2 {
+    font-size: 38px;
+
+    letter-spacing: -1.5px;
+  }
+
+  .query-card {
+    padding: 20px;
+
+    border-radius: 17px;
+  }
+
+  .result-header {
+    flex-direction: column;
+  }
+
+  .confidence {
+    width: 100%;
+
+    text-align: left;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card {
+    padding: 18px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 500px) {
+  .header {
+    position: static;
+  }
+
+  .container {
+    width: 94%;
+  }
+
+  .hero h2 {
+    font-size: 32px;
+  }
+
+  .hero p {
+    font-size: 14px;
+  }
+
+  .examples {
+    align-items: flex-start;
+  }
+
+  .examples > span {
+    width: 100%;
+  }
+
+  .answer-card {
+    padding: 17px;
+  }
+
+  .single-result {
+    font-size: 30px;
+  }
+
+  .chart-container {
+    min-height: 280px;
+  }
+
+  .chart-card {
+    padding: 14px;
+  }
+
+  .result-header h2 {
+    font-size: 18px;
+  }
+
+  .result-table th,
+  .result-table td {
+    padding: 11px 12px;
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "query": "What is the average order value by region?",
+  "status": "success",
+  "plan": {
+    "operation": "group_by",
+    "metric": "revenue",
+    "aggregation": "average_order_value",
+    "group_by": [
+      "region"
+    ],
+    "filters": [],
+    "limit": null,
+    "order": "desc",
+    "nested": false
+  },
+  "result": [
+    {
+      "region": "NA",
+      "average_order_value": 1087.4667
+    },
+    {
+      "region": "EMEA",
+      "average_order_value": 799.3333
+    },
+    {
+      "region": "APAC",
+      "average_order_value": 118.0
+    }
+  ],
+  "confidence": 0.9,
+  "explanation": "Calculated average order value for each region using total revenue divided by unique order count."
+}
