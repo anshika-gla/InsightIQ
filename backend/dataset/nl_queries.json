@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "query": "Total sales in India for March",
     "expected_logic": "SUM(revenue) WHERE country='India' AND month='2024-03'"
