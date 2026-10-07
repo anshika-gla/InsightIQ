@@ -1,75 +1,50 @@
 from typing import Any
 
-import pandas as pd
-
 from data.loader import load_sales_data, load_targets_data
+from engine.aggregations import (
+    add_derived_columns,
+    calculate_average_order_value,
+    calculate_count,
+    calculate_sum,
+    calculate_average,
+)
 from engine.filters import apply_filters
-from engine.aggregations import aggregate, add_derived_columns
-from engine.ranking import rank_by_metric, rank_within_groups
-from engine.percentages import calculate_contribution_percentage
+from engine.ranking import rank_by_metric
 from engine.comparisons import compare_with_targets
+from engine.percentages import calculate_contribution_percentage
 from engine.time_analysis import monthly_metric, calculate_yoy_growth
 from engine.nested_queries import top_n_within_groups
 
 
-def execute_query_plan(
-    plan: dict[str, Any]
-) -> dict[str, Any]:
-    """Execute a validated analytics query plan."""
+def _normalize_group_by(group_by):
+    if group_by is None:
+        return []
 
-    operation = plan.get("operation")
-
-    metric = plan.get("metric") or "revenue"
-
-    group_by = plan.get("group_by") or []
-
-    # Make sure group_by is always a list.
     if isinstance(group_by, str):
-        group_by = [group_by]
+        return [group_by]
 
-    limit = plan.get("limit")
+    return list(group_by)
 
-    filters = plan.get("filters") or []
 
-    # =========================================================
-    # LOAD DATA
-    # =========================================================
-
-    sales_df = add_derived_columns(
-        load_sales_data()
-    )
-
-    targets_df = load_targets_data()
-
-    # =========================================================
-    # APPLY FILTERS
-    # =========================================================
+def _normalize_filters(filters):
+    if not filters:
+        return {}
 
     filter_dict = {}
 
     for item in filters:
-
         if hasattr(item, "model_dump"):
             item = item.model_dump()
 
         if not isinstance(item, dict):
-            raise ValueError(
-                "Each filter must be a dictionary."
-            )
+            raise ValueError("Each filter must be a dictionary.")
 
         column = item.get("column")
-
-        operator = item.get(
-            "operator",
-            "eq"
-        )
-
+        operator = item.get("operator", "eq")
         value = item.get("value")
 
         if not column:
-            raise ValueError(
-                "Filter column is required."
-            )
+            raise ValueError("Filter column is required.")
 
         if operator != "eq":
             raise ValueError(
@@ -78,325 +53,365 @@ def execute_query_plan(
 
         filter_dict[column] = value
 
-    sales_df = apply_filters(
-        sales_df,
-        filter_dict
+    return filter_dict
+
+
+def _validate_group_columns(df, group_by):
+    for column in group_by:
+        if column not in df.columns:
+            raise ValueError(
+                f"Unknown group-by column: {column}"
+            )
+
+
+def _validate_metric(df, metric):
+    supported_metrics = {
+        "revenue",
+        "profit",
+        "quantity",
+        "shipping_cost",
+        "average_order_value",
+        "order_count",
+    }
+
+    if metric not in supported_metrics and metric not in df.columns:
+        raise ValueError(
+            f"Unsupported metric: {metric}"
+        )
+
+
+def execute_query_plan(plan: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(plan, dict):
+        if hasattr(plan, "model_dump"):
+            plan = plan.model_dump()
+        else:
+            raise ValueError(
+                "Query plan must be a dictionary."
+            )
+
+    operation = plan.get("operation")
+
+    if not operation:
+        raise ValueError(
+            "Query plan must contain an operation."
+        )
+
+    metric = plan.get("metric") or "revenue"
+    group_by = _normalize_group_by(
+        plan.get("group_by")
     )
+    limit = plan.get("limit")
+    order = plan.get("order", "desc")
+    filters = plan.get("filters") or []
+    time_period = plan.get("time_period")
+    nested = plan.get("nested", False)
 
-    # =========================================================
-    # TARGET COMPARISON
-    # =========================================================
+    sales_df = load_sales_data()
+    targets_df = load_targets_data()
 
-    if operation == "comparison":
+    sales_df = add_derived_columns(sales_df)
 
-        result = compare_with_targets(
+    filter_dict = _normalize_filters(filters)
+
+    if filter_dict:
+        sales_df = apply_filters(
             sales_df,
-            targets_df,
-            month=plan.get(
-                "time_period"
-            ),
+            filter_dict
         )
 
-    # =========================================================
-    # PERCENTAGE CONTRIBUTION
-    # =========================================================
-
-    elif operation == "percentage":
-
-        if not group_by:
-            raise ValueError(
-                "A group_by column is required "
-                "for percentages."
-            )
-
-        result = calculate_contribution_percentage(
+    if group_by:
+        _validate_group_columns(
             sales_df,
-            group_by[0],
-            metric,
+            group_by
         )
 
-    # =========================================================
-    # RANKING / TOP-N
-    # =========================================================
-
-    elif operation in {
-        "rank",
-        "top_n",
+    if operation not in {
+        "comparison",
+        "percentage",
+        "time_analysis"
     }:
-
-        if not group_by:
-            raise ValueError(
-                "A group_by column is required "
-                "for ranking."
-            )
-
-        ascending = (
-            plan.get(
-                "order",
-                "desc"
-            )
-            == "asc"
+        _validate_metric(
+            sales_df,
+            metric
         )
 
-        # -----------------------------------------------------
-        # Ranking within groups
-        # -----------------------------------------------------
+    if operation == "sum":
 
-        if len(group_by) >= 2:
+        if group_by:
+            grouped = sales_df.groupby(
+                group_by,
+                as_index=False
+            )[metric].sum()
 
-            if plan.get("nested"):
+            result = grouped.to_dict(
+                orient="records"
+            )
 
-                result = top_n_within_groups(
-                    sales_df,
-                    group_column=group_by[0],
-                    item_column=group_by[1],
-                    metric_column=metric,
-                    n=limit or 3,
-                    ascending=ascending,
-                )
+        else:
+            result = calculate_sum(
+                sales_df,
+                metric
+            )
+
+    elif operation == "average":
+
+        if metric == "average_order_value":
+
+            if group_by:
+
+                grouped_results = []
+
+                for group_values, group_df in sales_df.groupby(
+                    group_by
+                ):
+
+                    if not isinstance(
+                        group_values,
+                        tuple
+                    ):
+                        group_values = (
+                            group_values,
+                        )
+
+                    row = {}
+
+                    for index, column in enumerate(
+                        group_by
+                    ):
+                        row[column] = group_values[index]
+
+                    row["average_order_value"] = (
+                        calculate_average_order_value(
+                            group_df
+                        )
+                    )
+
+                    grouped_results.append(row)
+
+                result = grouped_results
 
             else:
-
-                result = rank_within_groups(
-                    sales_df,
-                    group_column=group_by[0],
-                    item_column=group_by[1],
-                    metric_column=metric,
-                    ascending=ascending,
-                    limit=limit,
+                result = calculate_average_order_value(
+                    sales_df
                 )
 
-        # -----------------------------------------------------
-        # Normal ranking
-        # -----------------------------------------------------
+        elif group_by:
 
-        else:
+            grouped = sales_df.groupby(
+                group_by,
+                as_index=False
+            )[metric].mean()
 
-            result = rank_by_metric(
-                sales_df,
-                group_column=group_by[0],
-                metric_column=metric,
-                ascending=ascending,
-                limit=limit,
-            )
-
-    # =========================================================
-    # TIME ANALYSIS
-    # =========================================================
-
-    elif operation == "time_analysis":
-
-        if (
-            plan.get(
-                "comparison_type"
-            )
-            == "year_over_year"
-        ):
-
-            result = calculate_yoy_growth(
-                sales_df,
-                metric_column=metric,
+            result = grouped.to_dict(
+                orient="records"
             )
 
         else:
 
-            result = monthly_metric(
+            result = calculate_average(
                 sales_df,
-                metric_column=metric,
-                aggregation=(
-                    plan.get(
-                        "aggregation"
-                    )
-                    or "sum"
-                ),
+                metric
             )
 
-    # =========================================================
-    # GROUP BY
-    # =========================================================
+    elif operation == "count":
+
+        if group_by:
+
+            grouped = (
+                sales_df
+                .groupby(group_by)
+                .size()
+                .reset_index(name="count")
+            )
+
+            result = grouped.to_dict(
+                orient="records"
+            )
+
+        else:
+
+            result = calculate_count(
+                sales_df,
+                metric
+            )
 
     elif operation == "group_by":
 
         if not group_by:
             raise ValueError(
-                "A group_by column is required."
+                "group_by operation requires group_by columns."
             )
 
-        # =====================================================
-        # AVERAGE ORDER VALUE BY GROUP
-        # =====================================================
+        if metric == "average_order_value":
 
-        if (
-            plan.get(
-                "aggregation"
-            )
-            in {
-                "average_order_value",
-                "aov",
-            }
-        ):
+            grouped_results = []
 
-            required_columns = {
-                "order_id",
-                "revenue",
-            }
-
-            missing_columns = (
-                required_columns
-                - set(sales_df.columns)
-            )
-
-            if missing_columns:
-                raise ValueError(
-                    "Missing columns required "
-                    f"for AOV: "
-                    f"{sorted(missing_columns)}"
-                )
-
-            grouped = (
-                sales_df
-                .groupby(group_by)
-                .agg(
-                    total_revenue=(
-                        "revenue",
-                        "sum",
-                    ),
-                    order_count=(
-                        "order_id",
-                        "nunique",
-                    ),
-                )
-                .reset_index()
-            )
-
-            grouped[
-                "average_order_value"
-            ] = 0.0
-
-            valid_orders = (
-                grouped[
-                    "order_count"
-                ]
-                != 0
-            )
-
-            grouped.loc[
-                valid_orders,
-                "average_order_value",
-            ] = (
-                grouped.loc[
-                    valid_orders,
-                    "total_revenue",
-                ]
-                / grouped.loc[
-                    valid_orders,
-                    "order_count",
-                ]
-            )
-
-            result = grouped[
+            for group_values, group_df in sales_df.groupby(
                 group_by
-                + [
-                    "average_order_value"
-                ]
-            ]
+            ):
 
-            result = result.sort_values(
-                "average_order_value",
-                ascending=(
-                    plan.get(
-                        "order",
-                        "desc"
+                if not isinstance(
+                    group_values,
+                    tuple
+                ):
+                    group_values = (
+                        group_values,
                     )
-                    == "asc"
-                ),
-            )
 
-            if limit:
-                result = result.head(
-                    limit
+                row = {}
+
+                for index, column in enumerate(
+                    group_by
+                ):
+                    row[column] = group_values[index]
+
+                row["average_order_value"] = (
+                    calculate_average_order_value(
+                        group_df
+                    )
                 )
 
-            result = result.reset_index(
-                drop=True
-            )
+                grouped_results.append(row)
 
-        # =====================================================
-        # NORMAL GROUPED SUM
-        # =====================================================
+            result = grouped_results
 
         else:
 
-            missing = [
-                column
-                for column in (
-                    group_by
-                    + [metric]
-                )
-                if column
-                not in sales_df.columns
-            ]
+            grouped = sales_df.groupby(
+                group_by,
+                as_index=False
+            )[metric].sum()
 
-            if missing:
-                raise ValueError(
-                    "Unknown columns: "
-                    f"{sorted(set(missing))}"
-                )
-
-            result = (
-                sales_df
-                .groupby(
-                    group_by,
-                    as_index=False,
-                )[metric]
-                .sum()
-                .sort_values(
-                    metric,
-                    ascending=(
-                        plan.get(
-                            "order",
-                            "desc"
-                        )
-                        == "asc"
-                    ),
-                )
+            result = grouped.to_dict(
+                orient="records"
             )
-
-            if limit:
-                result = result.head(
-                    limit
-                )
-
-            result = result.reset_index(
-                drop=True
-            )
-
-    # =========================================================
-    # SCALAR AGGREGATIONS
-    # =========================================================
 
     elif operation in {
-        "sum",
-        "average",
-        "count",
+        "rank",
+        "top_n"
     }:
 
-        aggregation = (
-            plan.get(
-                "aggregation"
+        if not group_by:
+            raise ValueError(
+                "Ranking requires at least one group-by column."
             )
-            or operation
-        )
 
-        result = aggregate(
+        if limit is None:
+            limit = 5
+
+        if not isinstance(
+            limit,
+            int
+        ) or limit <= 0:
+            raise ValueError(
+                "limit must be a positive integer."
+            )
+
+        if nested or len(group_by) >= 2:
+
+            if len(group_by) < 2:
+                raise ValueError(
+                    "Nested ranking requires two group-by columns."
+                )
+
+            group_column = group_by[0]
+            item_column = group_by[1]
+
+            output_df = top_n_within_groups(
+                sales_df,
+                group_column=group_column,
+                item_column=item_column,
+                metric_column=metric,
+                n=limit,
+                ascending=(
+                    order == "asc"
+                )
+            )
+
+            result = output_df.to_dict(
+                orient="records"
+            )
+
+        else:
+
+            output_df = rank_by_metric(
+                sales_df,
+                group_column=group_by[0],
+                metric_column=metric,
+                limit=limit,
+                ascending=(
+                    order == "asc"
+                )
+            )
+
+            result = output_df.to_dict(
+                orient="records"
+            )
+
+    elif operation == "percentage":
+
+        if not group_by:
+            raise ValueError(
+                "Percentage operation requires a group-by column."
+            )
+
+        output_df = calculate_contribution_percentage(
             sales_df,
-            aggregation,
-            metric,
+            group_column=group_by[0],
+            metric_column=metric
         )
 
-    # =========================================================
-    # UNSUPPORTED OPERATION
-    # =========================================================
+        result = output_df.to_dict(
+            orient="records"
+        )
+
+    elif operation == "comparison":
+
+        month = (
+            time_period
+            if time_period
+            else None
+        )
+
+        output_df = compare_with_targets(
+            sales_df,
+            targets_df,
+            month=month
+        )
+
+        result = output_df.to_dict(
+            orient="records"
+        )
+
+    elif operation == "time_analysis":
+
+        comparison_type = plan.get(
+            "comparison_type"
+        )
+
+        if comparison_type == "year_over_year":
+
+            result = calculate_yoy_growth(
+                sales_df,
+                metric=metric
+            )
+
+        else:
+
+            output_df = monthly_metric(
+                sales_df,
+                metric=metric
+            )
+
+            result = output_df.to_dict(
+                orient="records"
+            )
+
+    elif operation == "filter":
+
+        result = sales_df.to_dict(
+            orient="records"
+        )
 
     else:
 
@@ -404,51 +419,15 @@ def execute_query_plan(
             f"Unsupported operation: {operation}"
         )
 
-    # =========================================================
-    # CONVERT RESULT TO JSON-FRIENDLY FORMAT
-    # =========================================================
-
-    if isinstance(
-        result,
-        pd.DataFrame,
-    ):
-
-        output = result.to_dict(
-            orient="records"
-        )
-
-    elif isinstance(
-        result,
-        pd.Series,
-    ):
-
-        output = result.to_dict()
-
-    elif hasattr(
-        result,
-        "item",
-    ):
-
-        output = result.item()
-
-    else:
-
-        output = result
-
-    # =========================================================
-    # FINAL RESPONSE
-    # =========================================================
+    rows_returned = (
+        len(result)
+        if isinstance(result, list)
+        else 1
+    )
 
     return {
         "operation": operation,
         "metric": metric,
-        "result": output,
-        "rows_returned": (
-            len(output)
-            if isinstance(
-                output,
-                list,
-            )
-            else 1
-        ),
+        "result": result,
+        "rows_returned": rows_returned
     }

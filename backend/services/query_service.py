@@ -1,4 +1,3 @@
-
 from typing import Any
 
 from ai.client import AIClient
@@ -18,11 +17,9 @@ class QueryService:
 
         query = user_query.strip()
 
-        # Step 1: Generate the plan using AI.
         plan = await self.ai_client.generate_query_plan(query)
         plan_data = plan.model_dump()
 
-        # Step 2: Validate the plan.
         is_valid, errors = validate_query_plan(plan_data)
 
         if not is_valid:
@@ -30,31 +27,36 @@ class QueryService:
                 "Invalid query plan: " + "; ".join(errors)
             )
 
-        # Step 3: Execute the analytics plan.
         execution = execute_query_plan(plan_data)
 
-        # Step 4: Calculate confidence and explanation.
-        confidence = calculate_confidence(plan_data, execution)
-        explanation = generate_explanation(plan_data, execution)
+        confidence = calculate_confidence(
+            plan_data,
+            execution
+        )
+
+        explanation = generate_explanation(
+            plan_data,
+            execution
+        )
+
+        generated_logic = {
+            "operation": plan_data.get("operation"),
+            "metric": plan_data.get("metric"),
+            "aggregation": plan_data.get("aggregation"),
+            "group_by": plan_data.get("group_by", []),
+            "filters": [
+                item.model_dump()
+                for item in plan.filters
+            ],
+            "time_period": plan_data.get("time_period"),
+            "rows_returned": execution["rows_returned"],
+        }
 
         return {
             "query": query,
             "status": "success",
-            "plan": plan_data,
+            "generated_logic": generated_logic,
             "result": execution["result"],
-            "logic": {
-                "operation": plan_data.get("operation"),
-                "metric": plan_data.get("metric"),
-                "aggregation": plan_data.get("aggregation"),
-                "group_by": plan_data.get("group_by", []),
-                "filters": [
-                    item.model_dump()
-                    for item in plan.filters
-                ],
-                "time_period": plan_data.get("time_period"),
-                "rows_returned": execution["rows_returned"],
-            },
-            "confidence": confidence,
+            "confidence_score": confidence,
             "explanation": explanation,
         }
-

@@ -1,33 +1,50 @@
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, HTTPException
+from models.query_models import QueryRequest
+from services.query_service import process_query
 
-api = Blueprint("api", __name__)
+router = APIRouter(prefix="/api", tags=["Analytics"])
 
 
-@api.route("/health", methods=["GET"])
+@router.get("/health")
 def health():
-    return jsonify({
-        "status": "success",
-        "message": "Analytics Query Engine is running"
-    })
+    return {
+        "status": "healthy",
+        "service": "InsightIQ"
+    }
 
 
-@api.route("/query", methods=["POST"])
-def query():
-    data = request.get_json()
+@router.post("/query")
+def query(request: QueryRequest):
+    try:
+        response = process_query(request.query)
 
-    query_text = data.get("query", "").strip()
+        return {
+            "query": response["query"],
+            "status": response.get("status", "success"),
+            "plan": response.get("plan", {}),
+            "result": response.get("result"),
+            "generated_logic": response.get(
+                "generated_logic",
+                response.get("logic", {})
+            ),
+            "confidence_score": response.get(
+                "confidence_score",
+                response.get("confidence", 0.0)
+            ),
+            "explanation": response.get(
+                "explanation",
+                "Query processed successfully."
+            )
+        }
 
-    if not query_text:
-        return jsonify({
-            "error": "Query is required"
-        }), 400
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        )
 
-    # Query engine yahan call hoga
-    # Abhi temporary response
-    return jsonify({
-        "query": query_text,
-        "generated_logic": "",
-        "result": "",
-        "confidence_score": 0.0,
-        "explanation": "Query received successfully."
-    })
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc)
+        )
