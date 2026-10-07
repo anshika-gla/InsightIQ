@@ -1,18 +1,13 @@
 {
   "query": "What are the top 3 customers in each region by revenue?",
-  "status": "success",
-  "plan": {
+  "generated_logic": {
     "operation": "top_n",
     "metric": "revenue",
     "aggregation": null,
-    "group_by": [
-      "region",
-      "customer_id"
-    ],
+    "group_by": ["region", "customer_id"],
     "filters": [],
-    "limit": 3,
-    "order": "desc",
-    "nested": true
+    "time_period": null,
+    "rows_returned": 9
   },
   "result": [
     {
@@ -70,6 +65,6 @@
       "_rank": 3.0
     }
   ],
-  "confidence": 0.9,
-  "explanation": "Ranked customers by revenue within each region and returned the top 3 customers for each region."
+  "confidence_score": 0.9,
+  "explanation": "Customers were ranked by revenue independently within each region and the top 3 from each region were returned."
 }

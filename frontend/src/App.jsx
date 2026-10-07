@@ -16,7 +16,23 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const API_URL = "http://127.0.0.1:8000";
+import Header from "./components/Header";
+import QueryInput from "./components/QueryInput";
+import ExampleQueries from "./components/ExampleQueries";
+import ResultTable from "./components/ResultTable";
+import ConfidenceCard from "./components/ConfidenceCard";
+import ExplanationCard from "./components/ExplanationCard";
+import UnderstandingCard from "./components/UnderstandingCard";
+import LogicViewer from "./components/LogicViewer";
+import LoadingState from "./components/LoadingState";
+import ErrorMessage from "./components/ErrorMessage";
+
+import { analyzeQuery } from "./services/api";
+
+import {
+  formatNumber,
+  formatColumnName,
+} from "./utils/formatters";
 
 const CHART_COLORS = [
   "#4F46E5",
@@ -29,19 +45,15 @@ const CHART_COLORS = [
   "#8B5CF6",
 ];
 
-/* =========================================================
-   APP
-   ========================================================= */
-
 function App() {
   const [query, setQuery] = useState("");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* =======================================================
-     SUBMIT QUERY
-     ======================================================= */
+  // --------------------------------
+  // SUBMIT QUERY
+  // --------------------------------
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -56,23 +68,7 @@ function App() {
     setResponse(null);
 
     try {
-      const result = await fetch(`${API_URL}/api/query`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: query.trim(),
-        }),
-      });
-
-      const data = await result.json();
-
-      if (!result.ok) {
-        throw new Error(
-          data.detail || "Query processing failed."
-        );
-      }
+      const data = await analyzeQuery(query);
 
       setResponse(data);
     } catch (err) {
@@ -85,28 +81,17 @@ function App() {
     }
   };
 
-  /* =======================================================
-     FORMAT NUMBER
-     ======================================================= */
-
-  const formatNumber = (value) => {
-    if (typeof value !== "number") {
-      return value;
-    }
-
-    return Number(value.toFixed(2)).toLocaleString();
-  };
-
-  /* =======================================================
-     GET CHART TYPE
-     ======================================================= */
+  // --------------------------------
+  // CHART TYPE
+  // --------------------------------
 
   const getChartType = () => {
     if (!response || !Array.isArray(response.result)) {
       return null;
     }
 
-    const operation = response.logic?.operation;
+    const operation =
+      response.generated_logic?.operation;
 
     if (operation === "percentage") {
       return "pie";
@@ -126,9 +111,9 @@ function App() {
     return null;
   };
 
-  /* =======================================================
-     GET CHART DATA
-     ======================================================= */
+  // --------------------------------
+  // CHART DATA
+  // --------------------------------
 
   const getChartData = () => {
     if (!Array.isArray(response?.result)) {
@@ -138,9 +123,9 @@ function App() {
     return response.result;
   };
 
-  /* =======================================================
-     FIND NUMERIC COLUMN
-     ======================================================= */
+  // --------------------------------
+  // NUMERIC KEY
+  // --------------------------------
 
   const getNumericKey = () => {
     const rows = getChartData();
@@ -150,7 +135,8 @@ function App() {
     }
 
     if (
-      response?.logic?.operation === "percentage" &&
+      response?.generated_logic?.operation ===
+        "percentage" &&
       "contribution_percentage" in rows[0]
     ) {
       return "contribution_percentage";
@@ -169,9 +155,9 @@ function App() {
     );
   };
 
-  /* =======================================================
-     FIND CATEGORY / LABEL COLUMN
-     ======================================================= */
+  // --------------------------------
+  // CATEGORY KEY
+  // --------------------------------
 
   const getCategoryKey = () => {
     const rows = getChartData();
@@ -206,9 +192,9 @@ function App() {
     );
   };
 
-  /* =======================================================
-     PIE / DONUT CHART
-     ======================================================= */
+  // --------------------------------
+  // PIE CHART
+  // --------------------------------
 
   const renderPieChart = () => {
     const data = getChartData();
@@ -259,9 +245,9 @@ function App() {
                 innerRadius={65}
                 paddingAngle={3}
                 label={({ name, value }) =>
-                  `${name}: ${Number(
-                    value
-                  ).toFixed(1)}%`
+                  `${name}: ${Number(value).toFixed(
+                    1
+                  )}%`
                 }
               >
                 {data.map((_, index) => (
@@ -291,9 +277,9 @@ function App() {
     );
   };
 
-  /* =======================================================
-     BAR CHART
-     ======================================================= */
+  // --------------------------------
+  // BAR CHART
+  // --------------------------------
 
   const renderBarChart = () => {
     const data = getChartData();
@@ -312,9 +298,7 @@ function App() {
     return (
       <div className="chart-card">
         <div className="chart-heading">
-          <h3>
-            Performance Ranking
-          </h3>
+          <h3>Performance Ranking</h3>
 
           <p>
             Ranked comparison based on the
@@ -352,16 +336,10 @@ function App() {
 
               <Bar
                 dataKey={numericKey}
-                name={numericKey.replaceAll(
-                  "_",
-                  " "
+                name={formatColumnName(
+                  numericKey
                 )}
-                radius={[
-                  8,
-                  8,
-                  0,
-                  0,
-                ]}
+                radius={[8, 8, 0, 0]}
               >
                 {data.map((_, index) => (
                   <Cell
@@ -382,9 +360,9 @@ function App() {
     );
   };
 
-  /* =======================================================
-     LINE CHART
-     ======================================================= */
+  // --------------------------------
+  // LINE CHART
+  // --------------------------------
 
   const renderLineChart = () => {
     const data = getChartData();
@@ -411,9 +389,7 @@ function App() {
     return (
       <div className="chart-card">
         <div className="chart-heading">
-          <h3>
-            Revenue Trend
-          </h3>
+          <h3>Revenue Trend</h3>
 
           <p>
             Monthly analytics trend based on
@@ -439,9 +415,7 @@ function App() {
                 strokeDasharray="3 3"
               />
 
-              <XAxis
-                dataKey={timeKey}
-              />
+              <XAxis dataKey={timeKey} />
 
               <YAxis />
 
@@ -452,9 +426,8 @@ function App() {
               <Line
                 type="monotone"
                 dataKey={numericKey}
-                name={numericKey.replaceAll(
-                  "_",
-                  " "
+                name={formatColumnName(
+                  numericKey
                 )}
                 stroke="#4F46E5"
                 strokeWidth={3}
@@ -473,9 +446,9 @@ function App() {
     );
   };
 
-  /* =======================================================
-     SELECT CHART
-     ======================================================= */
+  // --------------------------------
+  // RENDER CHART
+  // --------------------------------
 
   const renderChart = () => {
     const chartType = getChartType();
@@ -499,142 +472,20 @@ function App() {
     return null;
   };
 
-  /* =======================================================
-     RENDER RESULT
-     ======================================================= */
-
-  const renderResult = () => {
-    if (!response?.result) {
-      return null;
-    }
-
-    /* =====================================================
-       ARRAY RESULT
-       ===================================================== */
-
-    if (Array.isArray(response.result)) {
-      if (response.result.length === 0) {
-        return (
-          <p>
-            No results found.
-          </p>
-        );
-      }
-
-      const columns = Object.keys(
-        response.result[0]
-      );
-
-      return (
-        <div className="result-table-wrapper">
-          <table className="result-table">
-            <thead>
-              <tr>
-                {columns.map((column) => (
-                  <th key={column}>
-                    {column.replaceAll(
-                      "_",
-                      " "
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody>
-              {response.result.map(
-                (row, index) => (
-                  <tr key={index}>
-                    {columns.map((column) => (
-                      <td key={column}>
-                        {formatNumber(
-                          row[column]
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    /* =====================================================
-       OBJECT RESULT
-       ===================================================== */
-
-    if (
-      typeof response.result ===
-      "object"
-    ) {
-      return (
-        <div className="object-result">
-          {Object.entries(
-            response.result
-          ).map(([key, value]) => (
-            <div
-              className="result-item"
-              key={key}
-            >
-              <span>
-                {key.replaceAll(
-                  "_",
-                  " "
-                )}
-              </span>
-
-              <strong>
-                {formatNumber(value)}
-              </strong>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    /* =====================================================
-       SINGLE VALUE
-       ===================================================== */
-
-    return (
-      <div className="single-result">
-        {formatNumber(response.result)}
-      </div>
-    );
-  };
-
-  /* =========================================================
-     UI
-     ========================================================= */
+  // --------------------------------
+  // MAIN UI
+  // --------------------------------
 
   return (
     <div className="app">
 
-      {/* HEADER */}
-      <header className="header">
-        <div>
-          <h1>InsightIQ</h1>
+      <Header />
 
-          <p>
-            Intelligent Analytics Query Engine
-          </p>
-        </div>
-
-        <div className="status-badge">
-          ● Analytics Engine
-        </div>
-      </header>
-
-      {/* MAIN */}
       <main className="container">
 
         {/* HERO */}
         <section className="hero">
-          <h2>
-            Ask your business data
-          </h2>
+          <h2>Ask your business data</h2>
 
           <p>
             Ask questions in natural language
@@ -643,115 +494,33 @@ function App() {
           </p>
         </section>
 
-        {/* QUERY CARD */}
-        <section className="query-card">
-          <form onSubmit={handleSubmit}>
+        {/* QUERY INPUT */}
+        <QueryInput
+          query={query}
+          setQuery={setQuery}
+          onSubmit={handleSubmit}
+          loading={loading}
+        />
 
-            <label htmlFor="query">
-              Analytics Question
-            </label>
+        {/* EXAMPLES */}
+        <ExampleQueries
+          setQuery={setQuery}
+        />
 
-            <textarea
-              id="query"
-              value={query}
-              onChange={(event) =>
-                setQuery(
-                  event.target.value
-                )
-              }
-              placeholder="Example: What are the top 2 cities by profit?"
-              rows={4}
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-            >
-              {loading
-                ? "Analyzing..."
-                : "Analyze Query"}
-            </button>
-
-          </form>
-
-          {/* EXAMPLE QUERIES */}
-          <div className="examples">
-
-            <span>
-              Try:
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                setQuery(
-                  "What are the total sales?"
-                )
-              }
-            >
-              Total Sales
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setQuery(
-                  "What are the top 2 cities by profit?"
-                )
-              }
-            >
-              Top Cities
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setQuery(
-                  "What is the sales contribution percentage by category?"
-                )
-              }
-            >
-              Contribution %
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setQuery(
-                  "What are the top 3 customers in each region by revenue?"
-                )
-              }
-            >
-              Top Customers
-            </button>
-
-          </div>
-        </section>
+        {/* LOADING */}
+        {loading && <LoadingState />}
 
         {/* ERROR */}
-        {error && (
-          <section className="error-card">
-
-            <strong>
-              Query Error
-            </strong>
-
-            <p>
-              {error}
-            </p>
-
-          </section>
-        )}
+        <ErrorMessage message={error} />
 
         {/* RESULTS */}
-        {response && (
+        {response && !loading && (
           <section className="results-section">
 
             {/* RESULT HEADER */}
             <div className="result-header">
 
               <div>
-
                 <span className="section-label">
                   RESULT
                 </span>
@@ -759,115 +528,89 @@ function App() {
                 <h2>
                   {response.query}
                 </h2>
-
               </div>
 
-              {/* CONFIDENCE */}
-              <div className="confidence">
-
-                <span>
-                  Confidence
-                </span>
-
-                <strong>
-                  {Math.round(
-                    response.confidence *
-                      100
-                  )}
-                  %
-                </strong>
-
-              </div>
+              <ConfidenceCard
+                confidence={
+                  response.confidence_score
+                }
+              />
 
             </div>
 
             {/* ANSWER */}
             <div className="answer-card">
+              <h3>Answer</h3>
 
-              <h3>
-                Answer
-              </h3>
+              {Array.isArray(
+                response.result
+              ) ? (
+                <ResultTable
+                  result={response.result}
+                />
+              ) : typeof response.result ===
+                  "object" &&
+                response.result !== null ? (
+                <div className="object-result">
 
-              {renderResult()}
+                  {Object.entries(
+                    response.result
+                  ).map(([key, value]) => (
+                    <div
+                      className="result-item"
+                      key={key}
+                    >
+                      <span>
+                        {formatColumnName(key)}
+                      </span>
 
+                      <strong>
+                        {typeof value ===
+                        "number"
+                          ? formatNumber(value)
+                          : value}
+                      </strong>
+                    </div>
+                  ))}
+
+                </div>
+              ) : (
+                <div className="single-result">
+
+                  {typeof response.result ===
+                  "number"
+                    ? formatNumber(
+                        response.result
+                      )
+                    : response.result}
+
+                </div>
+              )}
             </div>
 
             {/* CHART */}
             {renderChart()}
 
-            {/* DETAILS */}
-            <div className="details-grid">
-
-              <div className="detail-card">
-
-                <span>
-                  Operation
-                </span>
-
-                <strong>
-                  {response.logic
-                    ?.operation || "-"}
-                </strong>
-
-              </div>
-
-              <div className="detail-card">
-
-                <span>
-                  Metric
-                </span>
-
-                <strong>
-                  {response.logic
-                    ?.metric || "-"}
-                </strong>
-
-              </div>
-
-              <div className="detail-card">
-
-                <span>
-                  Rows Returned
-                </span>
-
-                <strong>
-                  {response.logic
-                    ?.rows_returned ?? 0}
-                </strong>
-
-              </div>
-
-            </div>
+            {/* UNDERSTANDING */}
+            <UnderstandingCard
+              logic={
+                response.generated_logic
+              }
+            />
 
             {/* EXPLANATION */}
-            <div className="explanation-card">
+            <ExplanationCard
+              explanation={
+                response.explanation
+              }
+            />
 
-              <h3>
-                Explanation
-              </h3>
-
-              <p>
-                {response.explanation}
-              </p>
-
-            </div>
-
-            {/* QUERY LOGIC */}
-            <details className="logic-card">
-
-              <summary>
-                View Query Logic
-              </summary>
-
-              <pre>
-                {JSON.stringify(
-                  response.logic,
-                  null,
-                  2
-                )}
-              </pre>
-
-            </details>
+            {/* LOGIC */}
+            <LogicViewer
+              logic={
+                response.generated_logic
+              }
+            />
 
           </section>
         )}

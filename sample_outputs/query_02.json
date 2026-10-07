@@ -1,28 +1,24 @@
 {
   "query": "What are the top 2 cities by profit?",
-  "status": "success",
-  "plan": {
+  "generated_logic": {
     "operation": "rank",
     "metric": "profit",
     "aggregation": null,
-    "group_by": [
-      "city"
-    ],
+    "group_by": ["city"],
     "filters": [],
-    "limit": 2,
-    "order": "desc",
-    "nested": false
+    "time_period": null,
+    "rows_returned": 2
   },
   "result": [
     {
       "city": "New York",
-      "profit": 200
+      "profit": 200.0
     },
     {
       "city": "San Francisco",
-      "profit": 180
+      "profit": 180.0
     }
   ],
-  "confidence": 0.9,
-  "explanation": "Results were ranked by profit in descending order and the top 2 cities were returned."
+  "confidence_score": 0.9,
+  "explanation": "Cities were ranked by total profit and the top 2 were returned."
 }

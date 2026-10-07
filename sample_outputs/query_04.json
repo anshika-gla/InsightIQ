@@ -1,22 +1,18 @@
 {
-  "query": "Which region missed its target in February 2024?",
-  "status": "success",
-  "plan": {
+  "query": "Compare actual revenue with target for February 2024.",
+  "generated_logic": {
     "operation": "comparison",
     "metric": "revenue",
     "aggregation": null,
     "group_by": [],
     "filters": [],
-    "limit": null,
-    "order": "desc",
     "time_period": "2024-02",
-    "nested": false
+    "rows_returned": 3
   },
   "result": [
     {
       "region": "APAC",
-      "month": "2024-02",
-      "target_revenue": 6000,
+      "target_revenue": 6000.0,
       "actual_revenue": 75.0,
       "difference": -5925.0,
       "achievement_percentage": 1.25,
@@ -24,8 +20,7 @@
     },
     {
       "region": "EMEA",
-      "month": "2024-02",
-      "target_revenue": 7500,
+      "target_revenue": 7500.0,
       "actual_revenue": 255.0,
       "difference": -7245.0,
       "achievement_percentage": 3.4,
@@ -33,14 +28,13 @@
     },
     {
       "region": "NA",
-      "month": "2024-02",
-      "target_revenue": 9500,
+      "target_revenue": 9500.0,
       "actual_revenue": 1116.0,
       "difference": -8384.0,
-      "achievement_percentage": 11.7474,
+      "achievement_percentage": 11.75,
       "target_met": false
     }
   ],
-  "confidence": 0.9,
-  "explanation": "Compared actual February 2024 revenue against the target revenue for each region. All three regions missed their targets."
+  "confidence_score": 0.9,
+  "explanation": "Actual revenue was compared with the target revenue for February 2024."
 }
